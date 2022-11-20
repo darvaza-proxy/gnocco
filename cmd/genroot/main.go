@@ -23,7 +23,7 @@ var myroots = map[string]*ips{}
 
 const (
 	url       = "https://www.internic.net/domain/named.root"
-	rootsfile = "doc/roots"
+	rootsfile = "doc/gnocco/roots"
 )
 
 func trimDot(s string) string {
