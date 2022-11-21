@@ -9,14 +9,11 @@ import (
 	"syscall"
 
 	log "github.com/darvaza-proxy/gnocco/shared/cblog"
+	"github.com/darvaza-proxy/gnocco/shared/version"
 )
 
 var (
 	logger *log.Logger
-	//Version contains the git hashtag injected by make
-	Version = "N/A"
-	//BuildDate contains the build timestamp injected by make
-	BuildDate = "N/A"
 )
 
 func main() {
@@ -27,7 +24,7 @@ func main() {
 	flag.Parse()
 
 	if vrs {
-		fmt.Fprintf(os.Stdout, "Gnocco version %s, build date %s\n", Version, BuildDate)
+		fmt.Fprintf(os.Stdout, "Gnocco version %s, build date %s\n", version.Version, version.BuildDate)
 		os.Exit(0)
 	}
 
