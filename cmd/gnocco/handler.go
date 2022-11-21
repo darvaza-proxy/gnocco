@@ -5,6 +5,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	"github.com/darvaza-proxy/gnocco/shared/log"
 	"github.com/darvaza-proxy/gnocco/shared/version"
 )
 
@@ -23,12 +24,13 @@ type gnoccoHandler struct {
 	Resolver *resolver
 	MaxJobs  int
 	Jobs     int
+	logger   log.Logger
 }
 
-func newHandler(m int) *gnoccoHandler {
-	c := newCache(int64(mainconfig.Cache.MaxCount), int32(mainconfig.Cache.Expire))
-	r := initResolver()
-	return &gnoccoHandler{c, r, m, 0}
+func (cf *Gnocco) newHandler(m int) *gnoccoHandler {
+	c := cf.newCache(int64(cf.Cache.MaxCount), int32(cf.Cache.Expire))
+	r := cf.newResolver()
+	return &gnoccoHandler{c, r, m, 0, cf.Logger()}
 }
 
 func (h *gnoccoHandler) do(Net string, w dns.ResponseWriter, req *dns.Msg) {
@@ -43,7 +45,7 @@ func (h *gnoccoHandler) do(Net string, w dns.ResponseWriter, req *dns.Msg) {
 			remote = w.RemoteAddr().(*net.UDPAddr).IP
 		}
 
-		logger.Info("%s lookup　%s", remote, Q.String())
+		h.logger.Info("%s lookup %s", remote, Q.String())
 		h.Jobs++
 		switch {
 		case Q.qclass == "IN":
@@ -58,7 +60,7 @@ func (h *gnoccoHandler) do(Net string, w dns.ResponseWriter, req *dns.Msg) {
 				w.WriteMsg(result)
 			} else {
 				if rcs, err := h.Cache.get(h.Cache.makeKey(Q.qname, "CNAME")); err == nil {
-					logger.Info("Found CNAME %s", rcs.String())
+					h.logger.Info("Found CNAME %s", rcs.String())
 					result := new(dns.Msg)
 					result.SetReply(req)
 					for _, z := range rcs.Value {

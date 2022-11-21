@@ -9,15 +9,20 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+
+	"github.com/darvaza-proxy/gnocco/shared/log"
 )
 
 type resolver struct {
 	Resolvers []net.IP
 	Iterative bool
+
+	Logger log.Logger
 }
 
-func initResolver() *resolver {
-	resolver := new(resolver)
+func (cf *Gnocco) newResolver() *resolver {
+	logger := cf.Logger()
+
 	resolvers := make([]net.IP, 0)
 
 	f, err := os.Open("/etc/resolv.conf")
@@ -42,13 +47,18 @@ func initResolver() *resolver {
 			}
 		}
 	}
-	resolver.Resolvers = resolvers
-	resolver.Iterative = mainconfig.IterateResolv
-	return resolver
 
+	resolver := &resolver{
+		Resolvers: resolvers,
+		Iterative: cf.IterateResolv,
+		Logger:    logger,
+	}
+	return resolver
 }
 
 func (r *resolver) Lookup(c *cache, w dns.ResponseWriter, req *dns.Msg) {
+	logger := r.Logger
+
 	if r.Iterative {
 		qn := req.Question[0].Name
 		qt := dns.TypeToString[req.Question[0].Qtype]
@@ -108,7 +118,7 @@ func (r *resolver) Iterate(c *cache, qname string, qtype string, slist *stack) {
 	if nstoask, ancerr := c.get(ancestor + "/NS"); ancerr == nil {
 		qq := randomfromslice(nstoask.Value)
 		if ns, nserr := c.get(dns.Fqdn(qq) + "/A"); nserr == nil {
-			ans := getans(qname, qtype, ns.Value[0])
+			ans := r.getans(qname, qtype, ns.Value[0])
 
 			switch typify(ans) {
 			case "Delegation":
@@ -147,7 +157,7 @@ func (r *resolver) Iterate(c *cache, qname string, qtype string, slist *stack) {
 				}
 
 			default:
-				logger.Error(typify(ans))
+				r.Logger.Error(typify(ans))
 			}
 		} else {
 			slist.push(qq, "A")
@@ -157,7 +167,7 @@ func (r *resolver) Iterate(c *cache, qname string, qtype string, slist *stack) {
 
 }
 
-func getans(qname string, qtype string, nameserver string) (result *dns.Msg) {
+func (r *resolver) getans(qname string, qtype string, nameserver string) (result *dns.Msg) {
 	m := new(dns.Msg)
 	m.Id = dns.Id()
 	m.RecursionDesired = false
@@ -166,7 +176,7 @@ func getans(qname string, qtype string, nameserver string) (result *dns.Msg) {
 	m.Question[0] = dns.Question{qname, qqt, dns.ClassINET}
 	result, err := dns.Exchange(m, nameserver+":53")
 	if err != nil {
-		logger.Error("%s", err)
+		r.Logger.Error("%s", err)
 	}
 	return
 

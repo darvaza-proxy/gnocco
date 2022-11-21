@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-func clientOK(ip net.IP) bool {
+func (cf *Gnocco) ClientOK(ip net.IP) bool {
 	result := false
-	permdir := mainconfig.PermissionsDir
+	permdir := cf.PermissionsDir
 	// if we do not have the permissions directory than
 	// everybody is allowed
 	if _, err := os.Stat(permdir); os.IsNotExist(err) {
