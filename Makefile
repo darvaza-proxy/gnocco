@@ -10,7 +10,7 @@ M = $(shell if [ "$$(tput colors 2> /dev/null || echo 0)" -ge 8 ]; then printf "
 
 .SUFFIXES:
 .PHONY: all
-all: fmt lint gen | $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
+all: gen fmt lint | $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
 	$Q $(GO) build \
 		-tags release \
 		-o $(BIN)/$(notdir $(MODULE)) ./cmd/$(notdir $(MODULE))
