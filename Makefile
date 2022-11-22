@@ -7,7 +7,7 @@ BIN      = bin
 
 GO      = go
 TIMEOUT = 15
-V = 0
+V =0
 Q = $(if $(filter 1,$V),,@)
 M = $(shell if [ "$$(tput colors 2> /dev/null || echo 0)" -ge 8 ]; then printf "\033[34;1m▶\033[0m"; else printf "▶"; fi)
 
@@ -53,4 +53,5 @@ help:
 
 .PHONY: gen
 gen: ; $(info $(M) generating roots file…) @ ## Generate roots file
+	$Q $(GO) run github.com/darvaza-proxy/gnocco/cmd/genroot
 	$Q $(GO) generate ./...
