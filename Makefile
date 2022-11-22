@@ -1,4 +1,7 @@
 MODULE   = $(shell $(GO) list -m)
+DATE    ?= $(shell date +%FT%T%z)
+VERSION ?= $(shell git describe --tags --always --dirty="-dev" --match=v* 2> /dev/null || \
+					cat .version 2> /dev/null || echo v0)
 PKGS     = $(or $(PKG),$(shell $(GO) list ./...))
 BIN      = bin
 
@@ -13,6 +16,7 @@ M = $(shell if [ "$$(tput colors 2> /dev/null || echo 0)" -ge 8 ]; then printf "
 all: gen fmt lint | $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
 	$Q $(GO) build \
 		-tags release \
+		-ldflags '-X github.com/darvaza-proxy/gnocco/shared/version.Version=$(VERSION) -X github.com/darvaza-proxy/gnocco/shared/version.BuildDate=$(DATE)' \
 		-o $(BIN)/$(notdir $(MODULE)) ./cmd/$(notdir $(MODULE))
 
 # Tools
@@ -49,5 +53,4 @@ help:
 
 .PHONY: gen
 gen: ; $(info $(M) generating roots file…) @ ## Generate roots file
-	$Q $(GO) run github.com/darvaza-proxy/gnocco/cmd/genroot
 	$Q $(GO) generate ./...
