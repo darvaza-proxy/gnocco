@@ -25,21 +25,20 @@ func trimDot(s string) string {
 }
 
 func main() {
+	var out *os.File
 
-	var sFile string
-	if len(os.Args) > 1 {
-		sFile = os.Args[1]
+	if len(os.Args) > 1 && os.Args[1] != "-" {
+		var err error
+		fileName := os.Args[1]
+		out, err = os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0666)
+		if err != nil {
+			panic(err)
+		}
 	} else {
-		sFile = os.Stdout.Name()
+		out = os.Stdout
 	}
 
-	rootsfile, err := os.OpenFile(sFile, os.O_CREATE|os.O_WRONLY, 0666)
-
-	if err != nil {
-		panic(err)
-	}
-
-	getRoots(rootsfile)
+	getRoots(out)
 
 }
 
@@ -101,8 +100,9 @@ func getRoots(rootsfile *os.File) {
 			panic(err)
 		}
 	}
-
-	if err = rootsfile.Sync(); err != nil {
-		panic(err)
+	if rootsfile.Name() != os.Stdout.Name() {
+		if err = rootsfile.Sync(); err != nil {
+			panic(err)
+		}
 	}
 }
