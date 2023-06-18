@@ -1,21 +1,32 @@
 package gnocco
 
 import (
-	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"darvaza.org/slog"
 	"github.com/miekg/dns"
-	"github.com/spf13/viper"
 )
 
-// ListenAndServe creates a new Gnocco server and starts listening
-func ListenAndServe() error {
-	NewConfig()
+const (
+	// DefaultConfigFile specifies the default filename of the config file
+	DefaultConfigFile = "gnocco.conf"
+	// DefaultLogLevel specifies the log level we handle by default
+	DefaultLogLevel = slog.Debug
+)
 
-	addr := net.JoinHostPort(viper.GetString("Listen.Host"), viper.GetString("Listen.Port"))
+var (
+	cfg     Config
+	cfgFile string
+	log     slog.Logger
+)
+
+// Run creates and runs a gnocco server using the given config
+func Run(cf *Config, logger slog.Logger) error {
+	log = logger
+	addr := net.JoinHostPort(cf.Listen.Host, cf.Listen.Port)
 
 	dns.HandleFunc(".", HandleRequest)
 
@@ -66,13 +77,13 @@ func sigHandlers() {
 		sig := <-signals
 		switch sig {
 		case syscall.SIGTERM, syscall.SIGINT:
-			fmt.Printf("Got %s, doing as requested\n", sig.String())
+			log.Info().Printf("Got %s, doing as requested\n", sig.String())
 			return
 		case syscall.SIGUSR2:
-			fmt.Println("Got SIGUSR2, dumping cache")
+			log.Info().Printf("Got SIGUSR2, dumping cache")
 		case syscall.SIGURG:
 		default:
-			fmt.Printf("Received signal %v\n", sig)
+			log.Info().Printf("Received \"%v\" which is not registered\n", sig)
 		}
 	}
 }

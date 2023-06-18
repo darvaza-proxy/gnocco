@@ -1,26 +1,67 @@
 package gnocco
 
 import (
-	"fmt"
+	"bytes"
+	"io"
 
-	"github.com/spf13/viper"
+	"github.com/BurntSushi/toml"
+
+	"darvaza.org/darvaza/shared/config"
+	"darvaza.org/darvaza/shared/config/expand"
 )
 
-// NewConfig creates a new config to be run
-func NewConfig() {
-	viper.SetConfigName("gnocco.conf")
-	viper.AddConfigPath(".")
-	viper.SetConfigType("toml")
+// Config represents the configuration file for setting up
+// the wilee Server
+type Config struct {
+	Listen ListenS
 
-	setDefaults()
-
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println(err)
-	}
+	Log LogS
 }
 
-func setDefaults() {
-	viper.SetDefault("Host", "")
-	viper.SetDefault("Port", 53)
-	viper.SetDefault("Daemon", true)
+// ListenS is the Listen config struct
+type ListenS struct {
+	Host string
+	Port string
+}
+
+// LogS is the logging config struct
+type LogS struct {
+	Stdout bool
+	File   string
+}
+
+// Prepare attempts to validate and fill the gaps on a
+// Config object
+func (c *Config) Prepare() error {
+	return config.Prepare(c)
+}
+
+// ReadInFile loads a TOML config file into a Config object,
+// validates and fills the gaps
+func (c *Config) ReadInFile(filename string) error {
+	// read and expand
+	s, err := expand.FromFile(filename, nil)
+	if err != nil {
+		return err
+	}
+	// decode
+	_, err = toml.Decode(s, c)
+	if err != nil {
+		return err
+	}
+	// and validate
+	return c.Prepare()
+}
+
+// WriteTo writes the Config in TOML format
+func (c *Config) WriteTo(w io.Writer) (int64, error) {
+	var buf bytes.Buffer
+	// encode
+	enc := toml.NewEncoder(&buf)
+	err := enc.Encode(c)
+	if err != nil {
+		return 0, err
+	}
+	// write
+	return buf.WriteTo(w)
 }
