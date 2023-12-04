@@ -28,30 +28,23 @@ func Run(cf *Config, logger slog.Logger) error {
 	log = logger
 	addr := net.JoinHostPort(cf.Listen.Host, cf.Listen.Port)
 
-	dns.HandleFunc(".", HandleRequest)
+	h, err := NewHandler("")
+	if err != nil {
+		return err
+	}
+	dns.Handle(".", h)
 
 	udpServer := &dns.Server{Addr: addr, Net: "udp"}
 	tcpServer := &dns.Server{Addr: addr, Net: "tcp"}
 
 	errChan := make(chan error)
 
-	go func() {
-		err := udpServer.ListenAndServe()
-		if err != nil {
-			errChan <- err
-		}
-	}()
-
-	go func() {
-		err := tcpServer.ListenAndServe()
-		if err != nil {
-			errChan <- err
-		}
-	}()
+	go runServer(udpServer, errChan)
+	go runServer(tcpServer, errChan)
 
 	sigHandlers()
 
-	err := shutdown(udpServer)
+	err = shutdown(udpServer)
 	if err != nil {
 		errChan <- err
 	}
@@ -64,6 +57,13 @@ func Run(cf *Config, logger slog.Logger) error {
 		return <-errChan
 	}
 	return nil
+}
+
+func runServer(srv *dns.Server, errChan chan error) {
+	err := srv.ListenAndServe()
+	if err != nil {
+		errChan <- err
+	}
 }
 
 func shutdown(srv *dns.Server) error {
