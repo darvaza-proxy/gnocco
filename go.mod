@@ -26,7 +26,7 @@ require (
 
 require (
 	darvaza.org/darvaza/shared/config v0.2.5
-	darvaza.org/resolver v0.6.2
+	darvaza.org/resolver v0.6.3
 	darvaza.org/slog v0.5.4
 	darvaza.org/slog/handlers/filter v0.4.6
 	darvaza.org/slog/handlers/zerolog v0.4.6
