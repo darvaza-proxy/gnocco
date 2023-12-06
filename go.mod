@@ -20,13 +20,14 @@ require (
 	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	mvdan.cc/sh/v3 v3.7.0 // indirect
 )
 
 require (
 	darvaza.org/darvaza/shared/config v0.2.5
-	darvaza.org/resolver v0.6.3
+	darvaza.org/resolver v0.7.1
 	darvaza.org/slog v0.5.4
 	darvaza.org/slog/handlers/filter v0.4.6
 	darvaza.org/slog/handlers/zerolog v0.4.6
